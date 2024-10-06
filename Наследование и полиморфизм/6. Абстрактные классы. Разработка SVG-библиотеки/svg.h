@@ -4,7 +4,6 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace svg {
 
@@ -83,7 +82,7 @@ private:
  * Класс Polyline моделирует элемент <polyline> для отображения ломаных линий
  * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/polyline
  */
-class Polyline final : public Object {
+class Polyline {
 public:
     // Добавляет очередную вершину к ломаной линии
     Polyline& AddPoint(Point point);
@@ -91,16 +90,13 @@ public:
     /*
      * Прочие методы и данные, необходимые для реализации элемента <polyline>
      */
-    void RenderObject(const RenderContext& context) const override;
-private:
-    std::vector<Point> points_;
 };
 
 /*
  * Класс Text моделирует элемент <text> для отображения текста
  * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/text
  */
-class Text final : public Object {
+class Text {
 public:
     // Задаёт координаты опорной точки (атрибуты x и y)
     Text& SetPosition(Point pos);
@@ -121,14 +117,6 @@ public:
     Text& SetData(std::string data);
 
     // Прочие данные и методы, необходимые для реализации элемента <text>
-    void RenderObject(const RenderContext& context) const override;
-private:
-    std::string data_;
-    Point anchor_point_;
-    Point offset_;
-    uint32_t font_size_ = 1;
-    std::string font_family_;
-    std::string font_weight_;
 };
 
 class Document {
@@ -139,10 +127,7 @@ public:
      Document doc;
      doc.Add(Circle().SetCenter({20, 30}).SetRadius(15));
     */
-    template<class T>
-    void Add(T obj) {
-        objects_.push_back(std::make_unique<T>(std::move(obj)));
-    }
+    // void Add(???);
 
     // Добавляет в svg-документ объект-наследник svg::Object
     void AddPtr(std::unique_ptr<Object>&& obj);
@@ -151,8 +136,6 @@ public:
     void Render(std::ostream& out) const;
 
     // Прочие методы и данные, необходимые для реализации класса Document
-private:
-    std::vector<std::unique_ptr<Object>> objects_;
 };
 
 }  // namespace svg
