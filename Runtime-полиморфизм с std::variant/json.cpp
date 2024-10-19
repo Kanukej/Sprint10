@@ -6,6 +6,14 @@
 
 using namespace std;
 
+namespace json {
+
+namespace {
+
+    
+using Number = std::variant<int, double>;
+
+
 Number LoadNumber(std::istream& input) {
     using namespace std::literals;
 
@@ -133,11 +141,6 @@ std::string LoadString(std::istream& input) {
 
     return s;
 }
-
-
-namespace json {
-
-namespace {    
 
 Node LoadNode(istream& input);
 
