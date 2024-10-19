@@ -15,14 +15,14 @@ Number LoadNumber(std::istream& input) {
     auto read_char = [&parsed_num, &input] {
         parsed_num += static_cast<char>(input.get());
         if (!input) {
-            throw ParsingError("Failed to read number from stream"s);
+            throw json::ParsingError("Failed to read number from stream"s);
         }
     };
 
     // Считывает одну или более цифр в parsed_num из input
     auto read_digits = [&input, read_char] {
         if (!std::isdigit(input.peek())) {
-            throw ParsingError("A digit is expected"s);
+            throw json::ParsingError("A digit is expected"s);
         }
         while (std::isdigit(input.peek())) {
             read_char();
@@ -70,7 +70,7 @@ Number LoadNumber(std::istream& input) {
         }
         return std::stod(parsed_num);
     } catch (...) {
-        throw ParsingError("Failed to convert "s + parsed_num + " to number"s);
+        throw json::ParsingError("Failed to convert "s + parsed_num + " to number"s);
     }
 }
 
@@ -85,7 +85,7 @@ std::string LoadString(std::istream& input) {
     while (true) {
         if (it == end) {
             // Поток закончился до того, как встретили закрывающую кавычку?
-            throw ParsingError("String parsing error");
+            throw json::ParsingError("String parsing error");
         }
         const char ch = *it;
         if (ch == '"') {
@@ -97,7 +97,7 @@ std::string LoadString(std::istream& input) {
             ++it;
             if (it == end) {
                 // Поток завершился сразу после символа обратной косой черты
-                throw ParsingError("String parsing error");
+                throw json::ParsingError("String parsing error");
             }
             const char escaped_char = *(it);
             // Обрабатываем одну из последовательностей: \\, \n, \t, \r, \"
@@ -119,11 +119,11 @@ std::string LoadString(std::istream& input) {
                     break;
                 default:
                     // Встретили неизвестную escape-последовательность
-                    throw ParsingError("Unrecognized escape sequence \\"s + escaped_char);
+                    throw json::ParsingError("Unrecognized escape sequence \\"s + escaped_char);
             }
         } else if (ch == '\n' || ch == '\r') {
             // Строковый литерал внутри- JSON не может прерываться символами \r или \n
-            throw ParsingError("Unexpected end of line"s);
+            throw json::ParsingError("Unexpected end of line"s);
         } else {
             // Просто считываем очередной символ и помещаем его в результирующую строку
             s.push_back(ch);
@@ -175,6 +175,9 @@ bool CheckSep(char sep) {
     
 bool CheckSep(istream& input) {
     char sep = static_cast<char>(input.get());
+    if (!std::isprint(sep) || std::isblank(sep)) {
+        return true;
+    }
     input.putback(sep);
     return CheckSep(sep);
 }
@@ -307,6 +310,11 @@ double Node::AsDouble() const {
     try {
         return std::get<double>(value_);
     } catch (const std::bad_variant_access& ex) {
+        //
+    }    
+    try {
+        return std::get<int>(value_);
+    } catch (const std::bad_variant_access& ex) {
         throw std::logic_error("");
     }
 }
@@ -385,7 +393,23 @@ void PrintValue(std::nullptr_t, const PrintContext& ctx) {
 }
 
 void PrintValue(const std::string& value, const PrintContext& ctx) {
-    ctx.out << "\""sv << value << "\""sv;
+    ctx.out << "\""sv;
+    for (const char c : value) {
+        if (c == '\\') {
+            ctx.out << "\\\\";
+        } else if (c == '"') {
+            ctx.out << "\\\"";
+        } else if (c == '\r') {
+            ctx.out << "\\r";
+        } else if (c == '\n') {
+            ctx.out << "\\n";
+        } else if (c == '\t') {
+            ctx.out << "\\t";
+        } else {
+            ctx.out << c;
+        }
+    }
+    ctx.out << "\""sv;
 }
 
 void PrintValue(const Array& arr, const PrintContext& ctx) {
