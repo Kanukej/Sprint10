@@ -6,18 +6,12 @@
 #include <vector>
 #include <variant>
 
-
-using Number = std::variant<int, double>;
-
+namespace json {
+    
 class ParsingError : public std::runtime_error {
 public:
     using runtime_error::runtime_error;
 };
-
-Number LoadNumber(std::istream& input);
-std::string LoadString(std::istream& input);
-
-namespace json {
 
 class Node;
 // Сохраните объявления Dict и Array без изменения
